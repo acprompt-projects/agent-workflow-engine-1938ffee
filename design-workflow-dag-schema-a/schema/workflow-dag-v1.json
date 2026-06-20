@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-workflow-engine.dev/schemas/workflow-dag-v1",
+  "title": "WorkflowDAG",
+  "description": "Schema for an agent workflow DAG definition",
+  "type": "object",
+  "required": ["id", "name", "version", "nodes", "edges"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-zA-Z0-9_-]+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "inputs": { "type": "object", "additionalProperties": { "$ref": "#/$defs/inputDef" } },
+    "nodes": { "type": "array", "items": { "$ref": "#/$defs/node" }, "minItems": 1 },
+    "edges": { "type": "array", "items": { "$ref": "#/$defs/edge" } },
+    "metadata": { "type": "object" }
+  },
+  "$defs": {
+    "inputDef": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["string", "number", "boolean", "object", "array"] },
+        "required": { "type": "boolean", "default": false },
+        "default": {}
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-zA-Z0-9_-]+$" },
+        "type": { "type": "string", "enum": ["task", "parallel", "join", "conditional", "subgraph"] },
+        "agent": { "type": "string" },
+        "action": { "type": "string" },
+        "inputs": { "type": "object" },
+        "timeout_ms": { "type": "integer", "minimum": 100, "default": 30000 },
+        "retries": { "type": "integer", "minimum": 0, "default": 0 },
+        "on_failure": { "type": "string", "enum": ["fail", "skip", "fallback"], "default": "fail" },
+        "fallback": { "type": "object", "properties": { "agent": { "type": "string" }, "action": { "type": "string" }, "inputs": { "type": "object" } } },
+        "children": { "type": "array", "items": { "type": "string" } },
+        "merge_strategy": { "type": "string", "enum": ["all", "any", "quorum"], "default": "all" },
+        "condition": { "type": "string" },
+        "workflow_id": { "type": "string" }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["source", "target"],
+      "properties": {
+        "source": { "type": "string" },
+        "target": { "type": "string" },
+        "label": { "type": "string" },
+        "port": { "type": "string", "enum": ["on_success", "on_failure", "on_skip"] }
+      }
+    }
+  }
+}
